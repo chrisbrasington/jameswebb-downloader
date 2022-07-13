@@ -93,10 +93,14 @@ if(!string.IsNullOrEmpty(imagePath))
 
         using(var handler = new HttpClientHandler())
         {
+            // handler.Headers.Add("User-Agent: Other");
             handler.UseDefaultCredentials = true;
 
             using(var client = new HttpClient(handler))
             {
+                //client.DefaultRequestHeaders.Add("User-Agent", "Other");
+                client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (compatible; AcmeInc/1.0)");
+
                 HttpResponseMessage response = await client.GetAsync(fullImagePath);
 
                 try
