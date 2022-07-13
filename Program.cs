@@ -16,7 +16,7 @@ if(File.Exists(cachePath))
     baseContent = text;
 }
 
-Console.WriteLine(baseContent);
+Console.WriteLine($"{baseUrl}{baseContent}");
 
 // https://medium.com/c-sharp-progarmming/create-your-own-web-scraper-in-c-in-just-a-few-minutes-c42649adda8
 HtmlWeb web = new HtmlWeb();
