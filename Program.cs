@@ -4,14 +4,11 @@ using System.IO;
 using System.Collections.Generic;
 using System.Globalization;
 
-HttpClient client = new HttpClient();
-
 string cachePath = "latest.txt";
 string baseUrl = "https://webbtelescope.org";
 //string baseImageUrl = "https://stsci-opo.org";
 string baseContent = "/contents/media/images/2022/031/01G780WF1VRADDSD5MDNDRKAGY?Type=Observations";
 string imageType = "png"; // .tif is huge
-
 
 if(File.Exists(cachePath))
 {
@@ -91,24 +88,34 @@ if(!string.IsNullOrEmpty(imagePath))
 
         string fullImagePath = $"https:{imagePath}";
 
+        Console.WriteLine("Downloading...");
         Console.WriteLine(fullImagePath);
 
-        HttpResponseMessage response = await client.GetAsync(fullImagePath);
-
-        try
+        using(var handler = new HttpClientHandler())
         {
-            response.EnsureSuccessStatusCode();
+            handler.UseDefaultCredentials = true;
 
-            Console.WriteLine("Successful, saving image");
-            string responseBody = await response.Content.ReadAsStringAsync();
+            using(var client = new HttpClient(handler))
+            {
+                HttpResponseMessage response = await client.GetAsync(fullImagePath);
 
-            await File.WriteAllTextAsync(imagePath, responseBody);
+                try
+                {
+                    response.EnsureSuccessStatusCode();
 
-            Console.WriteLine("Done");
+                    Console.WriteLine("Successful, saving image");
+                    string responseBody = await response.Content.ReadAsStringAsync();
+
+                    await File.WriteAllTextAsync(imagePath, responseBody);
+
+                    Console.WriteLine("Done");
+                }
+                catch(HttpRequestException ex)
+                {
+                    Console.Error.WriteLine(ex.Message);
+                }
+            }
         }
-        catch(HttpRequestException ex)
-        {
-            Console.Error.WriteLine(ex.Message);
-        }
+       
     }
 }
