@@ -4,9 +4,14 @@ using System.IO;
 using System.Collections.Generic;
 using System.Globalization;
 
+HttpClient client = new HttpClient();
+
 string cachePath = "latest.txt";
 string baseUrl = "https://webbtelescope.org";
+//string baseImageUrl = "https://stsci-opo.org";
 string baseContent = "/contents/media/images/2022/031/01G780WF1VRADDSD5MDNDRKAGY?Type=Observations";
+string imageType = "png"; // .tif is huge
+
 
 if(File.Exists(cachePath))
 {
@@ -22,36 +27,88 @@ HtmlDocument doc = web.Load($"{baseUrl}{baseContent}");
 
 var controls = doc.DocumentNode.SelectNodes("//div[@class='controls']");
 
+bool latest = true;
+
 if(controls.Any())
 {
     //Console.WriteLine(controls.First().InnerText);
     if(controls.First().InnerText.Contains("Previous"))
     {
+        latest = false;
         Console.WriteLine("Not the latest image, traveling..");
 
         // not the latest image
         // TODO: don't get all links on page, only this single control
         var links = controls.First().SelectNodes("//a[@href]");
 
-        if(links.Any())
+        foreach(var link in links)
         {
-            foreach(var link in links)
+            string hrefValue = link.GetAttributeValue( "href", string.Empty );
+
+            if(hrefValue.StartsWith("/contents/media"))
             {
-                string hrefValue = link.GetAttributeValue( "href", string.Empty );
+                Console.WriteLine(hrefValue);
+                
+                File.WriteAllTextAsync(cachePath, hrefValue);
 
-                if(hrefValue.StartsWith("/contents/media"))
-                {
-                    Console.WriteLine(hrefValue);
-                    
-                    File.WriteAllTextAsync(cachePath, hrefValue);
-
-                    break;
-                }
+                break;
             }
         }
     }
     else
     {
         Console.WriteLine("Latest image");
+    }
+}
+
+string imagePath = "";
+
+if(latest)
+{
+    var links = controls.First().SelectNodes("//a[@href]");
+
+    foreach(var link in links)
+    {
+        string hrefValue = link.GetAttributeValue( "href", string.Empty );
+
+        //Console.WriteLine(hrefValue);
+
+        if(hrefValue.EndsWith(imageType))
+        {
+            imagePath = hrefValue;
+            break; // first is full res
+        }
+    }
+}
+
+if(!string.IsNullOrEmpty(imagePath))
+{
+    string fileName = imagePath.Split('/').Last();
+
+    if(!File.Exists(fileName))
+    {
+        // TODO: delete prior images on disk
+
+        string fullImagePath = $"https:{imagePath}";
+
+        Console.WriteLine($"Downloading {fullImagePath}");
+
+        HttpResponseMessage response = await client.GetAsync(fullImagePath);
+
+        try
+        {
+            response.EnsureSuccessStatusCode();
+
+            Console.WriteLine("Successful, saving image");
+            string responseBody = await response.Content.ReadAsStringAsync();
+
+            await File.WriteAllTextAsync(imagePath, responseBody);
+
+            Console.WriteLine("Done");
+        }
+        catch(HttpRequestException ex)
+        {
+            Console.Error.WriteLine(ex.Message);
+        }
     }
 }
