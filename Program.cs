@@ -49,7 +49,7 @@ if(controls.Any())
             {
                 Console.WriteLine(hrefValue);
                 
-                File.WriteAllTextAsync(cachePath, hrefValue);
+                await File.WriteAllTextAsync(cachePath, hrefValue);
 
                 break;
             }
@@ -91,7 +91,7 @@ if(!string.IsNullOrEmpty(imagePath))
 
         string fullImagePath = $"https:{imagePath}";
 
-        Console.WriteLine($"Downloading {fullImagePath}");
+        Console.WriteLine(fullImagePath);
 
         HttpResponseMessage response = await client.GetAsync(fullImagePath);
 
