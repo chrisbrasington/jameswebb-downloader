@@ -98,7 +98,6 @@ if(!string.IsNullOrEmpty(imagePath))
 
             using(var client = new HttpClient(handler))
             {
-                //client.DefaultRequestHeaders.Add("User-Agent", "Other");
                 client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (compatible; AcmeInc/1.0)");
 
                 HttpResponseMessage response = await client.GetAsync(fullImagePath);
@@ -108,9 +107,9 @@ if(!string.IsNullOrEmpty(imagePath))
                     response.EnsureSuccessStatusCode();
 
                     Console.WriteLine("Successful, saving image");
-                    string responseBody = await response.Content.ReadAsStringAsync();
+                    var binaryData = await response.Content.ReadAsByteArrayAsync();
 
-                    await File.WriteAllTextAsync(imagePath, responseBody);
+                    await File.WriteAllBytesAsync(fileName, binaryData);
 
                     Console.WriteLine("Done");
                 }
@@ -120,6 +119,9 @@ if(!string.IsNullOrEmpty(imagePath))
                 }
             }
         }
-       
+    }
+    else
+    {
+        Console.WriteLine($"Already downloaded: {fileName}");
     }
 }
